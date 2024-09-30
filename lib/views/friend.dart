@@ -17,7 +17,7 @@ class Friends extends ConsumerWidget {
       body: chatRoomState.when(
         data: (chatRooms) {
           return chatRooms.isEmpty
-              ? Center(child: Text('No chat rooms available.'))
+              ? const Center(child: Text('No chat rooms available.'))
               : ListView.builder(
                   itemCount: chatRooms.length,
                   itemBuilder: (context, i) {

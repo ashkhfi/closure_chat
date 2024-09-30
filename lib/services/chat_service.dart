@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'package:closure/models/user_model.dart';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:hive/hive.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -15,9 +17,6 @@ class ChatService {
       'room_id': roomId,
       'sender_id': senderId,
     });
-
-    // Kirim push notifikasi menggunakan FCM
-    await _sendPushNotification(message, roomId, senderId);
 
     if (type == 'near') {
       final count = await _supabase
@@ -42,57 +41,6 @@ class ChatService {
     }
   }
 
-  Future<void> _sendPushNotification(String message, String roomId, String senderId) async {
-    final firebaseServerKey = 'YOUR_FIREBASE_SERVER_KEY';
-
-    // Ambil token penerima (misal dari Supabase)
-    final chatRoom = await _supabase
-        .from('chat_rooms')
-        .select('user1, user2')
-        .eq('room_id', roomId)
-        .single();
-
-    final receiverId = chatRoom['user1'] == senderId ? chatRoom['user2'] : chatRoom['user1'];
-
-    final receiverData = await _supabase
-        .from('users')
-        .select('fcm_token')
-        .eq('uid', receiverId)
-        .single();
-
-    final fcmToken = receiverData['fcm_token'];
-
-    // Jika token FCM tersedia, kirim push notifikasi
-    if (fcmToken != null && fcmToken.isNotEmpty) {
-      final response = await http.post(
-        Uri.parse('https://fcm.googleapis.com/fcm/send'),
-        headers: <String, String>{
-          'Content-Type': 'application/json',
-          'Authorization': 'key=$firebaseServerKey',
-        },
-        body: jsonEncode(
-          <String, dynamic>{
-            'to': fcmToken,
-            'notification': <String, dynamic>{
-              'title': 'New Message',
-              'body': message,
-            },
-            'data': <String, dynamic>{
-              'click_action': 'FLUTTER_NOTIFICATION_CLICK',
-              'roomId': roomId,
-            },
-          },
-        ),
-      );
-
-      if (response.statusCode == 200) {
-        print('Notifikasi berhasil dikirim');
-      } else {
-        print('Gagal mengirim notifikasi: ${response.body}');
-      }
-    }
-  }
-
   Future<void> cacheChatRooms(List<ChatRoomsModel> rooms) async {
     final box = Hive.box('chatCache');
     final roomsMap = rooms.map((room) => room.toMap()).toList();
@@ -102,7 +50,9 @@ class ChatService {
   Future<List<ChatRoomsModel>> getCachedChatRooms() async {
     final box = Hive.box('chatCache');
     final cachedRooms = box.get('chatRooms') ?? [];
-    return cachedRooms.map<ChatRoomsModel>((data) => ChatRoomsModel.fromMap(data)).toList();
+    return cachedRooms
+        .map<ChatRoomsModel>((data) => ChatRoomsModel.fromMap(data))
+        .toList();
   }
 
   Stream<List<ChatRoomsModel>> listenToChatRooms(String userId) async* {
@@ -115,8 +65,7 @@ class ChatService {
     // Listen to updates dari server
     await for (final event in _supabase
         .from('chat_rooms')
-        .stream(primaryKey: ['id'])
-        .eq('user1', userId)) {
+        .stream(primaryKey: ['id']).eq('user1', userId)) {
       final rooms = event.map((data) => ChatRoomsModel.fromMap(data)).toList();
       // Cache data terbaru
       await cacheChatRooms(rooms);
@@ -136,8 +85,7 @@ class ChatService {
     // Listen to updates dari server
     await for (final event in _supabase
         .from('chat_rooms')
-        .stream(primaryKey: ['id'])
-        .eq('user2', userId)) {
+        .stream(primaryKey: ['id']).eq('user2', userId)) {
       final rooms = event.map((data) => ChatRoomsModel.fromMap(data)).toList();
       // Cache data terbaru
       await cacheChatRooms(rooms);
@@ -157,7 +105,9 @@ class ChatService {
   Future<List<ChatsModel>> getCachedChats(String roomId) async {
     final box = Hive.box('chatCache');
     final cachedChats = box.get('chats_$roomId') ?? [];
-    return cachedChats.map<ChatsModel>((data) => ChatsModel.fromMap(data)).toList();
+    return cachedChats
+        .map<ChatsModel>((data) => ChatsModel.fromMap(data))
+        .toList();
   }
 
   // Stream Chats dengan cache
@@ -185,12 +135,50 @@ class ChatService {
   // Clear cache (jika dibutuhkan)
   Future<void> clearOldCache() async {
     final box = Hive.box('chatCache');
-    final lastAccess = box.get('lastAccess') ?? DateTime.now().subtract(Duration(days: 7));
+    final lastAccess =
+        box.get('lastAccess') ?? DateTime.now().subtract(Duration(days: 7));
 
     if (DateTime.now().difference(lastAccess).inDays > 7) {
       await box.clear();
     }
 
     await box.put('lastAccess', DateTime.now());
+  }
+
+  Future<bool> createNewChat(String u, UserModel user) async {
+    debugPrint('Menciptakan chat baru dengan pengguna: $u');
+    try {
+      final otherUser =
+          await _supabase.from('users').select().eq('username', u);
+      debugPrint('Pengguna lain ditemukan: ${otherUser.toString()}');
+      if (otherUser.isEmpty) {
+        return false;
+      } else {
+        final data = otherUser[0];
+        final roomId = '${data['username']}-$user.uid}';
+        final chats =
+            await _supabase.from('chat_rooms').select().eq('room_id', roomId);
+        debugPrint('Chat ditemukan: ${chats.toString()}');
+        if (chats.isEmpty) {
+          await _supabase.from('chat_rooms').insert({
+            'room_id': roomId,
+            'room_title': data['username'],
+            'unread1': 0,
+            'unread2': 0,
+            'user1': user.uid,
+            'user1profile': user.imageUrl,
+            'user1username': user.username,
+            'user2': data['uid'],
+            'user2profile': data['image_url'],
+            'user2username': data['username'],
+          });
+
+          return true;
+        }
+      }
+    } catch (e) {
+      debugPrint("ERROR: $e");
+    }
+    return false;
   }
 }

@@ -31,4 +31,6 @@ class ChatsNotifier extends StateNotifier<List<ChatsModel>> {
     }
   }
 
+  
+
 }

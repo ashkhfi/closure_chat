@@ -1,11 +1,8 @@
-import 'package:closure/services/user_service.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../models/user_model.dart';
 import '../providers/provider.dart';
 
 class HomeView extends ConsumerWidget {
@@ -143,7 +140,7 @@ class HomeView extends ConsumerWidget {
                           horizontal: 30, vertical: 15), // Ukuran tombol
                     ),
                     onPressed: () {
-                      // final username = _userData.isNotEmpty ? _userData[0]['username'] : '';
+                      // final username = user.isNotEmpty ? _userData[0]['username'] : '';
                       // Clipboard.setData(ClipboardData(text: username));
                       // ScaffoldMessenger.of(context).showSnackBar(
                       //   const SnackBar(content: Text('Username copied to clipboard')),

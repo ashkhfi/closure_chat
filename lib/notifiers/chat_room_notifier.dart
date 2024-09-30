@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:closure/models/user_model.dart';
 import 'package:closure/services/user_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/auth_service.dart';
@@ -25,6 +26,9 @@ class ChatRoomsNotifier extends AsyncNotifier<List<ChatRoomsModel>> {
     });
   }
 
+  Future<bool> createNewRoom(String u, UserModel user) async {
+    return await chatService.createNewChat(u, user);
+  }
 
   @override
   FutureOr<List<ChatRoomsModel>> build() async {

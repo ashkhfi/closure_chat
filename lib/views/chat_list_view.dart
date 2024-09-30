@@ -107,7 +107,7 @@ class ChatListView extends ConsumerWidget {
             Expanded(
               child: TabBarView(
                 children: [
-                  const FriendTab(),
+                   FriendTab(),
                   NearView(),
                 ],
               ),

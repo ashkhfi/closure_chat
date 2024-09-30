@@ -3,87 +3,94 @@ import 'dart:convert';
 import 'package:closure/services/chat_service.dart';
 import 'package:closure/services/user_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../providers/provider.dart';
+import '../services/auth_service.dart';
 import '../utils/style.dart';
 import 'friend.dart';
 
-class FriendTab extends StatefulWidget {
-  const FriendTab({super.key});
+class FriendTab extends ConsumerWidget {
+  FriendTab({super.key});
 
-  @override
-  State<FriendTab> createState() => _FriendTabState();
-}
-
-class _FriendTabState extends State<FriendTab> {
   List<dynamic> chats = [];
 
-  @override
-  void initState() {
-    super.initState();
-  }
-
   final u = TextEditingController();
-  void showNewChatDialog() async {
-    showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            content: SingleChildScrollView(
-                child: Column(
-              children: [
-                const Text(
-                  'Send  Message to',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(
-                  height: 16,
-                ),
-                TextField(
-                  controller: u,
-                  decoration: const InputDecoration(
-                    prefix: Text('@'),
-                    hintText: 'Username',
-                    border: InputBorder.none, // Menghilangkan garis bawah
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    void showNewChatDialog() async {
+      final roomsNotifier = ref.watch(chatRoomNotifierProvider.notifier);
+      final userNotifier = ref.watch(userNotifierProvider.notifier);
+      showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              content: SingleChildScrollView(
+                  child: Column(
+                children: [
+                  const Text(
+                    'Send  Message to',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
-                ),
-                const SizedBox(
-                  height: 8,
-                ),
-                Material(
-                  color: Styles.pink,
-                  borderRadius: BorderRadius.circular(30),
-                  child: InkWell(
-                    onTap: () async {
-                      // await SupabaseHelper().createNewChat(context, u.text);
-                      // Memanggil fungsi load untuk memperbarui daftar chat
-                    },
-                    child: const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 10),
-                      child: SizedBox(
-                          width: double.infinity,
-                          child: Center(
-                              child: Text(
-                            'Chat',
-                            style: TextStyle(color: Colors.white),
-                          ))),
+                  const SizedBox(
+                    height: 16,
+                  ),
+                  TextField(
+                    controller: u,
+                    decoration: const InputDecoration(
+                      prefix: Text('@'),
+                      hintText: 'Username',
+                      border: InputBorder.none, // Menghilangkan garis bawah
                     ),
                   ),
-                ),
-                const SizedBox(
-                  height: 8,
-                ),
-                const Text(
-                  "search username",
-                  style: TextStyle(fontSize: 12),
-                )
-              ],
-            )),
-          );
-        });
-  }
+                  const SizedBox(
+                    height: 8,
+                  ),
+                  Material(
+                    color: Styles.pink,
+                    borderRadius: BorderRadius.circular(30),
+                    child: InkWell(
+                      onTap: () async {
+                        // final _userService = UserService();
+                        // final _authService = AuthService();
+                        // final user = await _authService.getCurentUser();
+                        // print(user.email);
 
-  @override
-  Widget build(BuildContext context) {
+                        // // Menunggu fetchUserData selesai
+                        // await userNotifier.fetchUserData(user.email!);
+
+                        // // Mendapatkan data pengguna
+                        // final userData =
+                        //     await _userService.getUserData(user.email!);
+                        // var a = roomsNotifier.createNewRoom(u.text, userData!);
+                        // print("a : $a");
+                      },
+                      child: const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 10),
+                        child: SizedBox(
+                            width: double.infinity,
+                            child: Center(
+                                child: Text(
+                              'Chat',
+                              style: TextStyle(color: Colors.white),
+                            ))),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(
+                    height: 8,
+                  ),
+                  const Text(
+                    "search username",
+                    style: TextStyle(fontSize: 12),
+                  )
+                ],
+              )),
+            );
+          });
+    }
+
     return Scaffold(
       body: Friends(),
       /*ListView.builder(
@@ -136,7 +143,7 @@ class _FriendTabState extends State<FriendTab> {
             print(
                 'Received chat rooms: ${chatRooms.map((c) => c.toMap()).toList()}');
           });
-          // showNewChatDialog();
+          showNewChatDialog();
         },
         child: const Icon(Icons.add),
       ),

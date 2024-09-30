@@ -8,6 +8,7 @@ import '../models/user_model.dart';
 import '../notifiers/chat_notifier.dart';
 import '../notifiers/near_room_notifier.dart';
 import '../notifiers/user_notifier.dart';
+import '../services/fcm_service.dart';
 
 final authNotifierProvider = AsyncNotifierProvider<AuthNotifier, void>(() {
   return AuthNotifier();
@@ -35,6 +36,10 @@ final chatNearRoomNotifierProvider = AsyncNotifierProvider<NearRoomsNotifier, Li
     },
   );
 
+
+final notificationServiceProvider = Provider<NotificationService>((ref) {
+  return NotificationService();
+});
 
 
 

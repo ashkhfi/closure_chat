@@ -7,6 +7,7 @@ import 'package:hive_flutter/adapters.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'config.dart';
+import 'providers/provider.dart';
 import 'views/login_view.dart';
 
 void main() async {
@@ -19,29 +20,15 @@ void main() async {
   await Hive.openBox('chatRooms');
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-    FirebaseMessaging messaging = FirebaseMessaging.instance;
-
-  // Minta izin untuk menampilkan notifikasi (khususnya di iOS)
-  NotificationSettings settings = await messaging.requestPermission(
-    alert: true,
-    badge: true,
-    sound: true,
-  );
-   if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-    print('User granted permission for notifications');
-  } else if (settings.authorizationStatus == AuthorizationStatus.provisional) {
-    print('User granted provisional permission for notifications');
-  } else {
-    print('User declined or did not grant permission for notifications');
-  }
   runApp(const ProviderScope(child: MyApp()));
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(notificationServiceProvider);
     return MaterialApp(
       title: 'Flutter Demo',
       home: loginView(),
